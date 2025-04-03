@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOXIUM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+            transition: background-color 2.5s ease-in-out 1.2s;
+        }
+        .container {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .logo {
+            width: 120px;
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.3, 1);
+            z-index: 10;
+        }
+        .text {
+            display: flex;
+            margin-left: 10px;
+        }
+        .letter {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #fff;
+            opacity: 0;
+            transform: translateX(-15px);
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
+            margin: 0 3px;
+        }
+        .active .logo {
+            transform: translateX(-10px);
+        }
+        .active .letter {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .fade-out .logo,
+        .fade-out .letter {
+            opacity: 0;
+            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Styl paska */
+        .nav-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: rgba(240, 240, 240, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(-50px);
+            transition: all 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) 2.5s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .nav-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 30px;
+        }
+        /* Logo w lewym górnym rogu */
+        .nav-logo {
+            position: absolute;
+            left: 30px;
+            height: 24px;
+            filter: brightness(0);
+            transition: all 0.3s ease;
+        }
+        .nav-logo:hover {
+            opacity: 0.8;
+        }
+        .nav-title {
+            display: flex;
+            gap: 8px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .nav-title span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000;
+            letter-spacing: 0.3px;
+            padding: 5px 0;
+            transition: all 0.3s ease;
+        }
+        .nav-title span:hover {
+            color: #555;
+        }
+        .nav-icons {
+            display: flex;
+            margin-left: auto;
+            gap: 25px;
+        }
+        .nav-icon {
+            height: 24px;
+            opacity: 1;
+            transition: all 0.3s ease;
+            filter: brightness(0) contrast(1.2);
+        }
+        .nav-icon:hover {
+            filter: brightness(0) opacity(0.7);
+            transform: scale(1.05);
+        }
+        .light-mode {
+            background-color: #fff;
+            transition-delay: 0.5s;
+        }
+        .show-nav .nav-bar {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Przycisk chatu */
+        .chat-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: all 1s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .show-chat-button .chat-button {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 1s;
+        }
+        .chat-button:hover {
+            transform: scale(1.1) translateY(0);
+        }
+        .chat-button span {
+            font-size: 24px;
+            font-weight: bold;
+            color: black;
+        }
+        /* Okno chatu */
+        .chat-container {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 350px;
+            height: 450px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        .chat-header {
+            padding: 15px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .bot-message {
+            background: #f0f0f0;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+        .chat-input button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        /* Opóźnienia dla liter */
+        .active .letter:nth-child(1) { transition-delay: 0.08s; }
+        .active .letter:nth-child(2) { transition-delay: 0.16s; }
+        .active .letter:nth-child(3) { transition-delay: 0.24s; }
+        .active .letter:nth-child(4) { transition-delay: 0.32s; }
+        .active .letter:nth-child(5) { transition-delay: 0.40s; }
+        .active .letter:nth-child(6) { transition-delay: 0.48s; }
+    </style>
+</head>
+<body>
+    <div class="container" onclick="startAnimation()">
+        <img class="logo" src="image.png" alt="NOXIUM Logo">
+        <div class="text">
+            <span class="letter">N</span>
+            <span class="letter">O</span>
+            <span class="letter">X</span>
+            <span class="letter">I</span>
+            <span class="letter">U</span>
+            <span class="letter">M</span>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-content">
+            <img class="nav-logo" src="image.png" alt="NOXIUM Logo">
+            <div class="nav-title">
+                <span>Store</span>
+                <span>Noxium</span>
+            </div>
+            <div class="nav-icons">
+                <img class="nav-icon" src="https://cdn-icons-png.flaticon.com/512/3917/3917132.png" alt="Search">
+                <img class="nav-icon" src="https://cdn-icons-png.flaticon.com/512/3144/3144456.png" alt="Cart">
+            </div>
+        </div>
+    </div>
+
+    <!-- Przycisk i okno chatu -->
+    <div class="chat-button" onclick="toggleChat()">
+        <span>?</span>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            Noxium Support
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- Wiadomości będą dodawane dynamicznie -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your question..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Zmienna przechowująca wykryty język
+        let detectedLanguage = 'en';
+        let chatOpened = false;
+
+        function startAnimation() {
+            const container = document.querySelector('.container');
+            const body = document.body;
+            const navBar = document.querySelector('.nav-bar');
+            
+            // 1. Animacja liter
+            container.classList.add('active');
+            
+            // 2. Zanikanie logo i napisu
+            setTimeout(() => {
+                container.classList.add('fade-out');
+                
+                // 3. Pojawienie się paska (wcześniej)
+                setTimeout(() => {
+                    body.classList.add('show-nav');
+                    
+                    // 4. Rozjaśnianie tła (później)
+                    setTimeout(() => {
+                        body.classList.add('light-mode');
+                        // Pokazanie przycisku chatu po pojawieniu się białego tła
+                        body.classList.add('show-chat-button');
+                        
+                        // Wykrywanie języka przeglądarki
+                        detectLanguage();
+                    }, 500);
+                }, 700);
+            }, 800);
+        }
+
+        // Wykrywanie języka
+        function detectLanguage() {
+            const userLang = navigator.language || navigator.userLanguage;
+            detectedLanguage = userLang.split('-')[0]; // Pobieramy podstawowy kod języka (np. 'pl' z 'pl-PL')
+            
+            // Obsługiwane języki: en, pl, de, fr, es
+            if (!['en', 'pl', 'de', 'fr', 'es'].includes(detectedLanguage)) {
+                detectedLanguage = 'en'; // Domyślny język angielski
+            }
+        }
+
+        // Funkcje dla chatu
+        function toggleChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            chatOpened = !chatOpened;
+            chatContainer.style.display = chatOpened ? 'flex' : 'none';
+            
+            // Dodanie powitalnej wiadomości tylko przy pierwszym otwarciu
+            if (chatOpened && chatMessages.children.length === 0) {
+                addWelcomeMessage();
+            }
+        }
+
+        function addWelcomeMessage() {
+            const chatMessages = document.getElementById('chatMessages');
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.className = 'message bot-message';
+            
+            // Wiadomość powitalna w wykrytym języku
+            const greetings = {
+                'en': "Hello! How can I help you today?",
+                'pl': "Cześć! Jak mogę pomóc?",
+                'de': "Hallo! Wie kann ich Ihnen helfen?",
+                'fr': "Bonjour! Comment puis-je vous aider?",
+                'es': "¡Hola! ¿Cómo puedo ayudarte?"
+            };
+            
+            welcomeMessage.textContent = greetings[detectedLanguage] || greetings['en'];
+            chatMessages.appendChild(welcomeMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            if (userInput.value.trim() === '') return;
+            
+            // Dodanie wiadomości użytkownika
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.textContent = userInput.value;
+            chatMessages.appendChild(userMessage);
+            
+            // Symulacja odpowiedzi bota
+            setTimeout(() => {
+                const botMessage = document.createElement('div');
+                botMessage.className = 'message bot-message';
+                botMessage.textContent = generateBotResponse(userInput.value);
+                
+                chatMessages.appendChild(botMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1000);
+            
+            userInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function generateBotResponse(userText) {
+            const lowerText = userText.toLowerCase();
+            
+            // Odpowiedzi w różnych językach
+            const responses = {
+                'en': {
+                    'hello': "Hello! How can I assist you today?",
+                    'hi': "Hi there! What can I do for you?",
+                    'help': "I can help with general questions about Noxium. What do you need?",
+                    'product': "You can find all our products in the Store section.",
+                    'default': "I'm a simple bot. For more complex questions, please contact our support team."
+                },
+                'pl': {
+                    'cześć': "Cześć! Jak mogę pomóc?",
+                    'witam': "Witam! Z czym mogę pomóc?",
+                    'pomoc': "Mogę pomóc w podstawowych pytaniach o Noxium. Czego potrzebujesz?",
+                    'produkt': "Wszystkie nasze produkty znajdziesz w sekcji Sklep.",
+                    'default': "Jestem prostym botem. W przypadku bardziej złożonych pytań, skontaktuj się z naszym działem pomocy."
+                },
+                'de': {
+                    'hallo': "Hallo! Wie kann ich Ihnen helfen?",
+                    'guten tag': "Guten Tag! Womit kann ich Ihnen behilflich sein?",
+                    'hilfe': "Ich kann bei allgemeinen Fragen zu Noxium helfen. Was benötigen Sie?",
+                    'produkt': "Alle unsere Produkte finden Sie im Store-Bereich.",
+                    'default': "Ich bin ein einfacher Bot. Bei komplexeren Fragen wenden Sie sich bitte an unser Support-Team."
+                },
+                'fr': {
+                    'bonjour': "Bonjour! Comment puis-je vous aider?",
+                    'salut': "Salut! Que puis-je faire pour vous?",
+                    'aide': "Je peux aider avec des questions générales sur Noxium. De quoi avez-vous besoin?",
+                    'produit': "Vous pouvez trouver tous nos produits dans la section Boutique.",
+                    'default': "Je suis un simple bot. Pour des questions plus complexes, veuillez contacter notre équipe de support."
+                },
+                'es': {
+                    'hola': "¡Hola! ¿Cómo puedo ayudarte?",
+                    'buenos días': "¡Buenos días! ¿En qué puedo ayudarte?",
+                    'ayuda': "Puedo ayudar con preguntas generales sobre Noxium. ¿Qué necesitas?",
+                    'producto': "Puedes encontrar todos nuestros productos en la sección de Tienda.",
+                    'default': "Soy un bot simple. Para preguntas más complejas, por favor contacta a nuestro equipo de soporte."
+                }
+            };
+            
+            const langResponses = responses[detectedLanguage] || responses['en'];
+            
+            if (lowerText.includes('hello') || lowerText.includes('hi') || 
+                lowerText.includes('cześć') || lowerText.includes('witam') ||
+                lowerText.includes('hallo') || lowerText.includes('guten tag') ||
+                lowerText.includes('bonjour') || lowerText.includes('salut') ||
+                lowerText.includes('hola') || lowerText.includes('buenos días')) {
+                return langResponses['hello'] || langResponses['default'];
+            } else if (lowerText.includes('help') || lowerText.includes('pomoc') || 
+                      lowerText.includes('hilfe') || lowerText.includes('aide') || 
+                      lowerText.includes('ayuda')) {
+                return langResponses['help'] || langResponses['default'];
+            } else if (lowerText.includes('product') || lowerText.includes('produkt') || 
+                      lowerText.includes('produit') || lowerText.includes('producto')) {
+                return langResponses['product'] || langResponses['default'];
+            } else {
+                return langResponses['default'];
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
